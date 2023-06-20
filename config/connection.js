@@ -1,5 +1,10 @@
 const mongoose = require('mongoose');
 
-mongoose.connect('mongodb://127.0.0.1:27017/socialnetworkapi');
+mongoose.connect('mongodb://localhost/socialnetworkapi', {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+  useCreateIndex: true,
+  useFindAndModify: false
+});
 
 module.exports = mongoose.connection;
