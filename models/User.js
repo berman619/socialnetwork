@@ -1,16 +1,17 @@
 const mongoose = require('mongoose');
+const Schema = mongoose.Schema;
 
-// Define the UserSchema
-// fields for: 
-    // username (string, unique, required, trimmed)
-    // email (string, required, unique, must match a valid email address) 
-        // use mongoose's match validation with regex
-    // thoughts (array of _id values referencing the Thought model)
-    // friends (array of _id values referencing the User model)
+const userSchema = new mongoose.Schema({
+    username: { type: String, unique: true, required: 'Username is required', trim: true },
+    email: { type: String, unique: true, required: 'Email address is required', match: /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/ },
+    thoughts: [{ type: Schema.Types.ObjectId, ref: 'Thought' }],
+    friends: [{ type: Schema.Types.ObjectId, ref: 'User'}]
+})
 
-// Define a "friendCount" virtual
-    // retrieves length of user's friends array on query
-    // uses the .virtual() method on the UserSchema 
-    // inside this method, calculate the length of the friends array
+userSchema.virtual('friendCount').get(function() {
+    return this.friends.length;
+    });
 
-// Compile the UserSchema into a model and export it
+const User = mongoose.model('user', userSchema);
+
+module.exports = User;
