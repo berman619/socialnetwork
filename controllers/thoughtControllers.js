@@ -25,14 +25,12 @@ module.exports = {
       async createThought(req, res) {
         try {
           const dbThoughtData = await Thought.create(req.body);
-          
-          const thought = await Thought.findById(dbThoughtData.thoughtId);
-          if (!thought) {
-            return res.status(404).json({ message: 'Thought not found' });
+          const user = await User.findById(req.body.userId);
+          if (!user) {
+            return res.status(404).json({ message: 'User not found' });
           }
           user.thoughts.push(dbThoughtData._id);
           await user.save();
-      
           res.json(dbThoughtData);
         } catch (error) {
           res.status(500).json({ message: 'Server error' });
@@ -60,11 +58,16 @@ module.exports = {
       async deleteThought(req, res) {
         try {
           const deletedThought = await Thought.findByIdAndDelete(req.params.thoughtId);
-    
+      
           if (!deletedThought) {
             return res.status(404).json({ message: 'Thought not found' });
           }
-    
+      
+          const user = await User.updateOne(
+            { thoughts: req.params.thoughtId },
+            { $pull: { thoughts: req.params.thoughtId } }
+          );
+      
           res.json({ message: 'Thought deleted successfully' });
         } catch (error) {
           res.status(500).json({ message: 'Server error' });
@@ -92,15 +95,17 @@ module.exports = {
       
       async deleteReaction(req, res) {
         try {
-          const thoughtId = req.params.thoughtId;
-          const reactionId = req.params.reactionId;
-      
-          const thought = await Thought.findById(thoughtId);
+          const thought = await Thought.findById(req.params.thoughtId);
           if (!thought) {
             return res.status(404).json({ message: 'Thought not found' });
           }
       
-          thought.reactions.pull({ _id: reactionId });
+          const reaction = thought.reactions.id(req.params.reactionId);
+          if (!reaction) {
+            return res.status(404).json({ message: 'Reaction not found' });
+          }
+      
+          thought.reactions.pull({ _id: req.params.reactionId });
           const updatedThought = await thought.save();
       
           res.json(updatedThought);

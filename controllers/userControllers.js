@@ -30,12 +30,20 @@ module.exports = {
   
     async createUser(req, res) {
       try {
+        const existingUser = await User.findOne({
+          $or: [{ username: req.body.username }, { email: req.body.email }]
+        });
+    
+        if (existingUser) {
+          return res.status(400).json({ message: 'User already exists' });
+        }
+
         const dbUserData = await User.create(req.body);
         res.json(dbUserData);
       } catch (error) {
         res.status(500).json({ message: 'Server error' });
       }
-    },
+    },    
   
     async updateUser(req, res) {
       try {
