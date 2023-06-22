@@ -1,16 +1,17 @@
-const { User } = require('../models/User');
+const User = require('../models/User');
 
 module.exports = {
-    async getUsers(req, res) {
-      try {
-        const users = await User.find()
-          .populate('friends')
-          .populate('thoughts');
-        res.json(users);
-      } catch (error) {
-        res.status(500).json({ message: 'Server error' });
-      }
-    },
+  async getUsers(req, res) {
+    try {
+      const users = await User.find()
+        .populate('friends')
+        .populate('thoughts');
+      res.json(users);
+    } catch (error) {
+      console.log(error);
+      res.status(500).json({ message: 'Server error' });
+    }
+  },
   
     async getSingleUser(req, res) {
       try {
@@ -80,53 +81,57 @@ module.exports = {
     async addFriend(req, res) {
       try {
         const user = await User.findById(req.params.userId);
-  
+    
         if (!user) {
           return res.status(404).json({ message: 'User not found' });
         }
-  
-        const friendId = req.body.friendId;
-  
+    
+        const friendId = req.params.friendId;
+    
         if (user.friends.includes(friendId)) {
           return res
             .status(400)
             .json({ message: 'This user is already a friend' });
         }
-  
+    
         user.friends.push(friendId);
         const updatedUser = await user.save();
-  
+    
         res.json(updatedUser);
       } catch (error) {
         res.status(500).json({ message: 'Server error' });
       }
-    },
+    },    
   
     async deleteFriend(req, res) {
       try {
         const user = await User.findById(req.params.userId);
-  
+    
         if (!user) {
           return res.status(404).json({ message: 'User not found' });
         }
-  
-        const friendId = req.body.friendId;
-  
+    
+        const friendId = req.params.friendId;
+    
+        if (!user.friends) {
+          return res.status(400).json({ message: 'No friends found for the user' });
+        }
+    
         if (!user.friends.includes(friendId)) {
           return res
             .status(400)
             .json({ message: 'This user is not a friend' });
         }
-  
+    
         user.friends = user.friends.filter(
-          (friend) => friend.toString() !== friendId
+          (friend) => friend && friend.toString() !== friendId.toString()
         );
-  
+    
         const updatedUser = await user.save();
-  
+    
         res.json(updatedUser);
       } catch (error) {
         res.status(500).json({ message: 'Server error' });
       }
-    },
+    },    
   };

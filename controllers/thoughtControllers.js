@@ -1,4 +1,7 @@
-const { Thought } = require('../models/Thought');
+const Thought = require('../models/Thought');
+const User = require('../models/User');
+const mongoose = require('mongoose');
+
 
 module.exports = {
     async getThoughts(req, res) {
@@ -6,18 +9,20 @@ module.exports = {
         const thoughts = await Thought.find()
         res.json(thoughts);
       } catch (error) {
+        console.log(error);
         res.status(500).json({ message: 'Server error' });
       }
     },
 
     async getSingleThought(req, res) {
         try {
-          const thought = await Thought.findById(req.params.thoughtId)
-          if (!thought) {
+            const thought = await mongoose.model('Thought').findById(req.params.thoughtId);
+            if (!thought) {
             return res.status(404).json({ message: 'Thought not found' });
           }
           res.json(thought);
         } catch (error) {
+            console.log(error);
           res.status(500).json({ message: 'Server error' });
         }
       },
@@ -33,6 +38,7 @@ module.exports = {
           await user.save();
           res.json(dbThoughtData);
         } catch (error) {
+            console.log(error);
           res.status(500).json({ message: 'Server error' });
         }
       },
@@ -79,12 +85,12 @@ module.exports = {
           const thoughtId = req.params.thoughtId;
           const { reactionBody, username } = req.body;
       
-          const thought = await Thought.findById(thoughtId);
+          const thought = await mongoose.model('Thought').findById(thoughtId);
           if (!thought) {
             return res.status(404).json({ message: 'Thought not found' });
           }
       
-          thought.reactions.push({ reactionBody, username });
+          thought.reactions.push({ reactionId: new mongoose.Types.ObjectId(), reactionBody, username });
           const updatedThought = await thought.save();
       
           res.json(updatedThought);
@@ -95,22 +101,28 @@ module.exports = {
       
       async deleteReaction(req, res) {
         try {
-          const thought = await Thought.findById(req.params.thoughtId);
+          const thoughtId = req.params.thoughtId;
+          const reactionId = req.params.reactionId;
+      
+          const thought = await Thought.findById(thoughtId);
           if (!thought) {
             return res.status(404).json({ message: 'Thought not found' });
           }
       
-          const reaction = thought.reactions.id(req.params.reactionId);
-          if (!reaction) {
+          const reactionIndex = thought.reactions.findIndex(
+            (reaction) => reaction._id.toString() === reactionId
+          );
+          if (reactionIndex === -1) {
             return res.status(404).json({ message: 'Reaction not found' });
           }
       
-          thought.reactions.pull({ _id: req.params.reactionId });
-          const updatedThought = await thought.save();
+          thought.reactions.splice(reactionIndex, 1);
+          await thought.save();
       
-          res.json(updatedThought);
+          res.json(thought);
         } catch (error) {
           res.status(500).json({ message: 'Server error' });
         }
-      },
+      },      
+      
 };

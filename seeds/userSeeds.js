@@ -1,13 +1,12 @@
 const mongoose = require('mongoose');
 const User = require('../models/User');
 
-mongoose.connect('mongodb://localhost/social-api', {
+mongoose.connect('mongodb://localhost/socialnetworkapi', {
   useNewUrlParser: true,
-  useFindAndModify: false,
   useUnifiedTopology: true,
 });
 
-const userSeed = [
+let userData = [
   {
     username: 'zachberger',
     email: 'zachberger@gmail.com',
@@ -22,13 +21,9 @@ const userSeed = [
   }
 ];
 
-User.deleteMany({})
-  .then(() => User.collection.insertMany(userSeed))
-  .then(data => {
-    console.log(data.result.n + ' user records inserted!');
-    process.exit(0);
-  })
-  .catch(err => {
-    console.error(err);
-    process.exit(1);
-  });
+const seedUsers = async () => {
+    await User.deleteMany({});
+    await User.insertMany(userData);
+  };
+  
+module.exports = seedUsers;
